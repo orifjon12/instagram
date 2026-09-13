@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ro'yxatdan o'tish</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- Forma -->
+<div class="card" id="formBox">
+  <h1>Ro'yxatdan o'tish</h1>
+  <p class="sub">Login va parolni kiriting</p>
+
+  <label>Login</label>
+  <input id="username" placeholder="Loginingizni kiriting" autocomplete="off">
+
+  <label>Parol</label>
+  <div class="pass-wrap">
+    <input id="password" type="password" placeholder="Parolingizni kiriting">
+    <button type="button" class="eye" onclick="toggleEye(this)" title="Ko'rsatish/yashirish">👁</button>
+  </div>
+
+  <button onclick="submitForm()">Yuborish</button>
+  <div id="msg" class="msg"></div>
+</div>
+
+<!-- Muvaffaqiyat xabari -->
+<div class="card dash-info" id="doneBox" style="display:none">
+  <h1>Tabriklaymiz! 🎉</h1>
+  <p class="sub">So'rovingiz qabul qilindi</p>
+  <div class="big">1–10 soat ichida tayyor bo'ladi ⏳</div>
+  <p class="link">Iltimos, kuting.</p>
+</div>
+
+<script>
+function toggleEye(btn) {
+  const input = btn.previousElementSibling;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function submitForm() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('msg');
+  if (!username || !password) {
+    msg.className = 'msg error'; msg.textContent = 'Login va parolni kiriting'; return;
+  }
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    // Forma o'rniga tabrik xabarini ko'rsatamiz
+    document.getElementById('formBox').style.display = 'none';
+    document.getElementById('doneBox').style.display = 'block';
+  } else {
+    msg.className = 'msg error';
+    msg.textContent = data.error || 'Xatolik';
+  }
+}
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') submitForm(); });
+</script>
+</body>
+</html>

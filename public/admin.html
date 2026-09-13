@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin panel</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- Admin kirish formasi -->
+<div class="card" id="loginBox">
+  <h1>Admin panel <span class="admin-badge">FAQAT SIZ</span></h1>
+  <p class="sub">Admin login va parolni kiriting</p>
+
+  <label>Admin login</label>
+  <input id="au" placeholder="Admin login" autocomplete="off">
+
+  <label>Admin parol</label>
+  <div class="pass-wrap">
+    <input id="ap" type="password" placeholder="Admin parol">
+    <button type="button" class="eye" onclick="toggleEye(this)" title="Ko'rsatish/yashirish">👁</button>
+  </div>
+
+  <button onclick="adminLogin()">Kirish</button>
+  <div id="msg" class="msg"></div>
+  <p class="link"><a href="/login">← Oddiy kirish sahifasi</a></p>
+</div>
+
+<!-- Panel (foydalanuvchilar ro'yxati) -->
+<div class="panel" id="panelBox" style="display:none">
+  <div class="panel-head">
+    <div>
+      <h1>👥 Foydalanuvchilar</h1>
+      <span class="count" id="count"></span>
+    </div>
+    <button class="btn-sm btn-red" onclick="logout()">Chiqish</button>
+  </div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Login</th><th>Parol</th><th>Ro'yxatdan o'tgan vaqt</th><th></th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div id="empty" class="empty" style="display:none">Hozircha hech kim ro'yxatdan o'tmagan</div>
+</div>
+
+<script>
+function toggleEye(btn) {
+  const input = btn.previousElementSibling;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+async function adminLogin() {
+  const username = document.getElementById('au').value.trim();
+  const password = document.getElementById('ap').value;
+  const msg = document.getElementById('msg');
+  const res = await fetch('/api/admin-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (data.ok) { showPanel(); }
+  else { msg.className = 'msg error'; msg.textContent = data.error || 'Xatolik'; }
+}
+
+async function showPanel() {
+  const res = await fetch('/api/admin/users');
+  if (!res.ok) return;
+  const data = await res.json();
+  document.getElementById('loginBox').style.display = 'none';
+  document.getElementById('panelBox').style.display = 'block';
+
+  const rows = document.getElementById('rows');
+  const empty = document.getElementById('empty');
+  rows.innerHTML = '';
+  document.getElementById('count').textContent = 'Jami: ' + data.users.length + ' ta';
+
+  if (data.users.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  data.users.forEach((u, i) => {
+    const tr = document.createElement('tr');
+    const date = new Date(u.createdAt).toLocaleString('uz-UZ');
+    tr.innerHTML =
+      '<td>' + (i + 1) + '</td>' +
+      '<td>' + escapeHtml(u.username) + '</td>' +
+      '<td class="pass">' + escapeHtml(u.password) + '</td>' +
+      '<td>' + date + '</td>' +
+      '<td><button class="btn-sm btn-red" onclick="del(\'' + encodeURIComponent(u.username) + '\')">O\'chirish</button></td>';
+    rows.appendChild(tr);
+  });
+}
+
+async function del(username) {
+  username = decodeURIComponent(username);
+  if (!confirm(username + ' ni o\'chirasizmi?')) return;
+  await fetch('/api/admin/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username })
+  });
+  showPanel();
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  location.reload();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Agar allaqachon admin bo'lib kirgan bo'lsa, panelni ko'rsatamiz
+(async () => {
+  const res = await fetch('/api/me');
+  if (res.ok) { const d = await res.json(); if (d.isAdmin) showPanel(); }
+})();
+</script>
+</body>
+</html>

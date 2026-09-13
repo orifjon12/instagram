@@ -1,0 +1,12 @@
+{
+  "name": "login-sayt",
+  "version": "1.0.0",
+  "description": "Akkaunt yaratish, kirish va admin panelli oddiy sayt",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "author": "",
+  "license": "MIT"
+}

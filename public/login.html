@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kirish</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="card">
+  <h1>Kirish</h1>
+  <p class="sub">Hisobingizga kiring</p>
+
+  <label>Login</label>
+  <input id="username" placeholder="Loginingiz" autocomplete="off">
+
+  <label>Parol</label>
+  <div class="pass-wrap">
+    <input id="password" type="password" placeholder="Parolingiz">
+    <button type="button" class="eye" onclick="toggleEye(this)" title="Ko'rsatish/yashirish">👁</button>
+  </div>
+
+  <button onclick="login()">Kirish</button>
+  <div id="msg" class="msg"></div>
+
+  <p class="link">Hisobingiz yo'qmi? <a href="/register">Akkaunt yaratish</a></p>
+  <p class="link"><a href="/admin">Admin panel</a></p>
+</div>
+
+<script>
+function toggleEye(btn) {
+  const input = btn.previousElementSibling;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+async function login() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('msg');
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    location.href = '/dashboard';
+  } else {
+    msg.className = 'msg error';
+    msg.textContent = data.error || 'Xatolik';
+  }
+}
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>
