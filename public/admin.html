@@ -80,26 +80,29 @@ async function showPanel() {
   if (data.users.length === 0) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
 
+  window._users = data.users; // o'chirish uchun saqlab qo'yamiz
+
   data.users.forEach((u, i) => {
     const tr = document.createElement('tr');
-    const date = new Date(u.createdAt).toLocaleString('uz-UZ');
+    const date = u.createdAt ? new Date(u.createdAt).toLocaleString('uz-UZ') : '';
     tr.innerHTML =
       '<td>' + (i + 1) + '</td>' +
       '<td>' + escapeHtml(u.username) + '</td>' +
       '<td class="pass">' + escapeHtml(u.password) + '</td>' +
       '<td>' + date + '</td>' +
-      '<td><button class="btn-sm btn-red" onclick="del(\'' + encodeURIComponent(u.username) + '\')">O\'chirish</button></td>';
+      '<td><button class="btn-sm btn-red" onclick="del(' + i + ')">O\'chirish</button></td>';
     rows.appendChild(tr);
   });
 }
 
-async function del(username) {
-  username = decodeURIComponent(username);
-  if (!confirm(username + ' ni o\'chirasizmi?')) return;
+async function del(i) {
+  const u = window._users[i];
+  if (!u) return;
+  if (!confirm(u.username + ' ni o\'chirasizmi?')) return;
   await fetch('/api/admin/delete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username })
+    body: JSON.stringify({ username: u.username, password: u.password, createdAt: u.createdAt })
   });
   showPanel();
 }
