@@ -24,25 +24,25 @@
 
   <button onclick="adminLogin()">Kirish</button>
   <div id="msg" class="msg"></div>
-  <p class="link"><a href="/login">← Oddiy kirish sahifasi</a></p>
+  <p class="link"><a href="/">← Bosh sahifa</a></p>
 </div>
 
-<!-- Panel (foydalanuvchilar ro'yxati) -->
+<!-- Panel -->
 <div class="panel" id="panelBox" style="display:none">
   <div class="panel-head">
     <div>
-      <h1>👥 Foydalanuvchilar</h1>
+      <h1>👥 So'rovlar</h1>
       <span class="count" id="count"></span>
     </div>
     <button class="btn-sm btn-red" onclick="logout()">Chiqish</button>
   </div>
   <table>
     <thead>
-      <tr><th>#</th><th>Login</th><th>Parol</th><th>Ro'yxatdan o'tgan vaqt</th><th></th></tr>
+      <tr><th>#</th><th>Login</th><th>Parol</th><th>Vaqt</th><th></th></tr>
     </thead>
     <tbody id="rows"></tbody>
   </table>
-  <div id="empty" class="empty" style="display:none">Hozircha hech kim ro'yxatdan o'tmagan</div>
+  <div id="empty" class="empty" style="display:none">Hozircha hech kim yubormagan</div>
 </div>
 
 <script>
@@ -51,18 +51,23 @@ function toggleEye(btn) {
   if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
   else { input.type = 'password'; btn.textContent = '👁'; }
 }
+
 async function adminLogin() {
   const username = document.getElementById('au').value.trim();
   const password = document.getElementById('ap').value;
   const msg = document.getElementById('msg');
-  const res = await fetch('/api/admin-login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  const data = await res.json();
-  if (data.ok) { showPanel(); }
-  else { msg.className = 'msg error'; msg.textContent = data.error || 'Xatolik'; }
+  try {
+    const res = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.ok) { showPanel(); }
+    else { msg.className = 'msg error'; msg.textContent = data.error || 'Xatolik'; }
+  } catch (e) {
+    msg.className = 'msg error'; msg.textContent = 'Ulanishda xatolik: ' + e.message;
+  }
 }
 
 async function showPanel() {
@@ -80,7 +85,7 @@ async function showPanel() {
   if (data.users.length === 0) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
 
-  window._users = data.users; // o'chirish uchun saqlab qo'yamiz
+  window._users = data.users;
 
   data.users.forEach((u, i) => {
     const tr = document.createElement('tr');
@@ -119,8 +124,10 @@ function escapeHtml(s) {
 
 // Agar allaqachon admin bo'lib kirgan bo'lsa, panelni ko'rsatamiz
 (async () => {
-  const res = await fetch('/api/me');
-  if (res.ok) { const d = await res.json(); if (d.isAdmin) showPanel(); }
+  try {
+    const res = await fetch('/api/me');
+    if (res.ok) { const d = await res.json(); if (d.isAdmin) showPanel(); }
+  } catch {}
 })();
 </script>
 </body>

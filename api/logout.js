@@ -1,4 +1,5 @@
+const { send } = require('../lib/util');
+
 module.exports = (req, res) => {
-  res.setHeader('Set-Cookie', 'admintoken=; HttpOnly; Path=/; Max-Age=0');
-  res.status(200).json({ ok: true });
+  send(res, 200, { ok: true }, { 'Set-Cookie': 'admintoken=; HttpOnly; Path=/; Max-Age=0' });
 };
